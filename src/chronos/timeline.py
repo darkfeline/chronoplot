@@ -15,30 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with chronos.  If not, see <http://www.gnu.org/licenses/>.
 
-import shlex
-import argparse
-import logging
+from collections import namedtuple
 
-from . import draw
-from . import timeline as tline
+Event = namedtuple('Event', ['start', 'stop', 'group', 'title'])
 
 
-def parse_timeline(file):
-    timeline = tline.Timeline()
-    for line in file:
-        start, stop, group, title = shlex.split(line)
-        start = int(start)
-        stop = int(stop)
-        event = tline.Event(start, stop, group, title)
-        timeline.add_event(event)
-    return timeline
+class Timeline:
 
+    def __init__(self):
+        self.events = []
 
-def main():
-    logging.basicConfig(level='DEBUG')
-    parser = argparse.ArgumentParser()
-    parser.add_argument('file')
-    args = parser.parse_args()
-    with open(args.file) as file:
-        timeline = parse_timeline(file)
-    draw.text_draw(timeline)
+    def add_event(self, event):
+        self.events.append(event)

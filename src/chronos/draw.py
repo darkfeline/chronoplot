@@ -17,61 +17,87 @@
 
 import textwrap
 import logging
+import math
+
+from . import timeline as tline
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _scale(scalar, value):
+    """Scale an integer value."""
+    return round(value * scalar)
 
 
 def _box_cost(width, scalar, event):
     """Calculate cost (extra space) for drawing event."""
     lines = textwrap.wrap(event.title, width - 4)
-    height = round((event.stop - event.start) * scalar)
+    height = _scale(scalar, event.stop - event.start)
     return height - len(lines)
 
 
-def _min_cost(width, scalar, timeline):
-    """Calculate minimum cost for events in timeline."""
-    return min(_box_cost(width, scalar, event) for event in timeline.events)
+class _Timeline(tline.Timeline):
 
+    @classmethod
+    def load(cls, timeline):
+        new = cls()
+        new.events = timeline.events
 
-def _calculate_scalar(width, timeline):
-    """Calculate optimal height scalar for boxes.
+    def min_cost(self, width, scalar):
+        """Calculate minimum cost for events in timeline."""
+        return min(_box_cost(width, scalar, event) for event in self.events)
 
-    We are trying to minimize the lowest box cost, without any negative costs.
+    def calculate_scalar(self, width):
+        """Calculate optimal height scalar for boxes.
 
-    """
-    scalar = 1
-    min = float('-inf')
-    max = float('inf')
+        We are trying to minimize the lowest box cost, without any negative
+        costs.
 
-    while True:
-        _LOGGER.debug('Trying %s', scalar)
-        cost = _min_cost(width, scalar, timeline)
-        if cost > 0:
-            # Lower scalar.
-            _LOGGER.debug('Too big: %s', cost)
-            max = scalar
-            if min == float('-inf'):
-                scalar /= 2
+        """
+        scalar = 1
+        bot_bound = -math.inf
+        top_bound = math.inf
+
+        while True:
+            _LOGGER.debug('Trying %s', scalar)
+            cost = self.min_cost(width, scalar)
+            if cost > 0:
+                # Lower scalar.
+                _LOGGER.debug('Too big: %s', cost)
+                top_bound = scalar
+                if bot_bound == -math.inf:
+                    scalar /= 2
+                else:
+                    scalar = (bot_bound + scalar) / 2
+            elif cost < 0:
+                # Increase scalar.
+                _LOGGER.debug('Too small: %s', cost)
+                bot_bound = scalar
+                if top_bound == math.inf:
+                    scalar *= 2
+                else:
+                    scalar = (top_bound + scalar) / 2
             else:
-                scalar = (min + scalar) / 2
-        elif cost < 0:
-            # Increase scalar.
-            _LOGGER.debug('Too small: %s', cost)
-            min = scalar
-            if max == float('inf'):
-                scalar *= 2
-            else:
-                scalar = (max + scalar) / 2
-        else:
-            _LOGGER.debug('Just right: %s', cost)
-            return scalar
+                _LOGGER.debug('Just right: %s', cost)
+                return scalar
+
+    def range(self):
+        """Calculate width of timeline."""
+        start = math.inf
+        stop = -math.inf
+        for event in self.events:
+            if event.start < start:
+                start = event.start
+            if event.stop < stop:
+                stop = event.stop
+        return start, stop
 
 
 class _Box:
 
-    def __init__(self, text):
-        self.width = 20
-        self.height = 0
+    def __init__(self, width, height, text):
+        self.width = width
+        self.height = height
         self.text = text
 
     def format(self):
@@ -80,10 +106,15 @@ class _Box:
         hrule = '+' + '-' * (self.width - 2)
         lines.insert(hrule, 0)
         lines.append(hrule)
+        return lines
 
 
 def text_draw(timeline):
-    print(timeline.events)
-    width = 20
-    scalar = _calculate_scalar(width, timeline)
-    print(scalar)
+    timeline = _Timeline.load(timeline)
+    box_width = 20
+    # Calculate height/time scalar.
+    scalar = timeline.calculate_scalar(box_width)
+    # Calculate width for timeline.
+    start, stop = timeline
+    timeline_width = max(math.log10(x) for x in (start, stop))
+    # Make timeline.
