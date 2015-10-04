@@ -26,10 +26,10 @@ from . import timeline as tline
 def parse_timeline(file):
     timeline = tline.Timeline()
     for line in file:
-        start, stop, group, title = shlex.split(line)
+        start, stop, group, text = shlex.split(line)
         start = int(start)
         stop = int(stop)
-        event = tline.Event(start, stop, group, title)
+        event = tline.Event(start, stop, group, text)
         timeline.add_event(event)
     return timeline
 

@@ -16,14 +16,17 @@
 # along with chronos.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import namedtuple
+from collections import defaultdict
 
-Event = namedtuple('Event', ['start', 'stop', 'group', 'title'])
+Event = namedtuple('Event', ['start', 'stop', 'group', 'text'])
 
 
 class Timeline:
 
     def __init__(self):
         self.events = []
+        self.groups = defaultdict(list)
 
     def add_event(self, event):
         self.events.append(event)
+        self.groups[event.group].append(event)

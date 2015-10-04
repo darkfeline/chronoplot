@@ -24,16 +24,28 @@ from . import timeline as tline
 _LOGGER = logging.getLogger(__name__)
 
 
-def _scale(scalar, value):
-    """Scale an integer value."""
-    return round(value * scalar)
+class _Time:
+
+    def __init__(self, scalar, value):
+        self.value = value
+        self._scalar = scalar
+
+    @property
+    def scaled(self):
+        return round(self.value * self._scalar)
 
 
 def _box_cost(width, scalar, event):
-    """Calculate cost (extra space) for drawing event."""
-    lines = textwrap.wrap(event.title, width - 4)
-    height = _scale(scalar, event.stop - event.start)
-    return height - len(lines)
+    """Calculate cost (extra space) for drawing event.
+
+    Cost 0 means the text fits snugly into the box.
+    Cost 1 means the box has an extra blank line.
+    Cost -1 means the text overflows by one line.
+
+    """
+    lines = textwrap.wrap(event.text, width - 4)
+    height = _Time(scalar, event.stop - event.start).scaled
+    return height - len(lines) - 2
 
 
 class _Timeline(tline.Timeline):
@@ -42,6 +54,7 @@ class _Timeline(tline.Timeline):
     def load(cls, timeline):
         new = cls()
         new.events = timeline.events
+        new.groups = timeline.groups
         return new
 
     def min_cost(self, width, scalar):
@@ -94,20 +107,31 @@ class _Timeline(tline.Timeline):
         return start, stop
 
 
-class _Box:
+def _format_event(event, width, scalar):
+    """Format an event.
 
-    def __init__(self, width, height, text):
-        self.width = width
-        self.height = height
-        self.text = text
+    Returns a list of strings that is the event formatted into a text box.
 
-    def format(self):
-        lines = textwrap.wrap(self.text, self.width - 4)
-        lines = ['| ' + x + ' |' for x in lines]
-        hrule = '+' + '-' * (self.width - 2)
-        lines.insert(hrule, 0)
-        lines.append(hrule)
-        return lines
+    """
+    start = _Time(scalar, event.start)
+    # Build box.
+    lines = ['|{}|'.format(' ' * (width - 2))
+             for _ in range(start.scaled,
+                            _Time(scalar, event.stop).scaled + 1)]
+    hrule = '+{}+'.format('-' * (width - 2))
+    lines[0] = hrule
+    lines[-1] = hrule
+
+    # Format text.
+    text_lines = textwrap.wrap(event.text, width - 4)
+    text_lines = [format(x, '^{}'.format(width - 4)) for x in text_lines]
+    text_lines = ['| ' + x + ' |' for x in text_lines]
+
+    # Insert text into center of box.
+    diff = (len(lines) - len(text_lines)) // 2
+    for i, x in enumerate(text_lines):
+        lines[diff + i] = x
+    return start, lines
 
 
 def text_draw(timeline):
@@ -117,12 +141,28 @@ def text_draw(timeline):
     scalar = timeline.calculate_scalar(box_width)
     # Calculate width for timeline.
     start, stop = timeline.range()
-    timeline_width = math.ceil(max(math.log10(abs(x)) if x != 0 else 1
-                                   for x in (start, stop)))
+    start = _Time(scalar, start)
+    stop = _Time(scalar, stop)
+
     # Make timeline.
-    lines = [format(_scale(1 / scalar, x), '>{}'.format(timeline_width)) + ' -'
-             if x % 5 == 0 else
+    lines = [format(int(x / scalar))
+             for x in range(start.scaled, stop.scaled + 1)]
+    timeline_width = max(len(x) for x in lines)
+    lines = [format(x, '>{}'.format(timeline_width)) + ' -'
+             if i % 5 == 0 else
              ' ' * timeline_width + ' |'
-             for x in range(_scale(scalar, start), _scale(scalar, stop) + 1)]
+             for i, x in enumerate(lines)]
+
+    # Add events.
+    for _, events in timeline.groups.items():
+        group_lines = [' ' * (box_width) for _ in lines]
+        # Use boxes to draw events.
+        for event in events:
+            box_start, box_lines = _format_event(event, box_width, scalar)
+            for i, x in enumerate(box_lines):
+                group_lines[start.scaled + box_start.scaled + i] = x
+        # Add group events to timeline.
+        lines = [' '.join(x) for x in zip(lines, group_lines)]
+    # Print lines.
     for x in lines:
         print(x)
