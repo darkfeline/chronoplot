@@ -36,10 +36,11 @@ def parse_timeline(file):
     for line in file:
         event = Event(*shlex.split(line))
         timeline.add_event(event)
+    return timeline
 
 
 def text_draw(timeline):
-    print('hi')
+    print(timeline.events)
 
 
 def main():
