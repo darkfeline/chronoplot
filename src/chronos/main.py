@@ -35,7 +35,7 @@ def parse_timeline(file):
 
 
 def main():
-    logging.basicConfig(level='DEBUG')
+    logging.basicConfig(level='INFO')
     parser = argparse.ArgumentParser()
     parser.add_argument('file')
     args = parser.parse_args()
