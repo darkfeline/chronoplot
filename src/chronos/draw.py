@@ -42,6 +42,7 @@ class _Timeline(tline.Timeline):
     def load(cls, timeline):
         new = cls()
         new.events = timeline.events
+        return new
 
     def min_cost(self, width, scalar):
         """Calculate minimum cost for events in timeline."""
@@ -88,7 +89,7 @@ class _Timeline(tline.Timeline):
         for event in self.events:
             if event.start < start:
                 start = event.start
-            if event.stop < stop:
+            if event.stop > stop:
                 stop = event.stop
         return start, stop
 
@@ -115,6 +116,13 @@ def text_draw(timeline):
     # Calculate height/time scalar.
     scalar = timeline.calculate_scalar(box_width)
     # Calculate width for timeline.
-    start, stop = timeline
-    timeline_width = max(math.log10(x) for x in (start, stop))
+    start, stop = timeline.range()
+    timeline_width = math.ceil(max(math.log10(abs(x)) if x != 0 else 1
+                                   for x in (start, stop)))
     # Make timeline.
+    lines = [format(_scale(1 / scalar, x), '>{}'.format(timeline_width)) + ' -'
+             if x % 5 == 0 else
+             ' ' * timeline_width + ' |'
+             for x in range(_scale(scalar, start), _scale(scalar, stop) + 1)]
+    for x in lines:
+        print(x)
