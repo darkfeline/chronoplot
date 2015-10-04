@@ -44,7 +44,9 @@ def _box_cost(width, scalar, event):
 
     """
     lines = textwrap.wrap(event.text, width - 4)
-    height = _Time(scalar, event.stop - event.start).scaled
+    stop = _Time(scalar, event.stop)
+    start = _Time(scalar, event.start)
+    height = stop.scaled - start.scaled + 1
     return height - len(lines) - 2
 
 
@@ -147,7 +149,7 @@ def text_draw(timeline):
     _LOGGER.debug('Stop: %s, scaled: %s', stop.value, stop.scaled)
 
     # Make timeline.
-    lines = [format(x / scalar)
+    lines = [format(x / scalar, '.2f')
              for x in range(start.scaled, stop.scaled + 1)]
     timeline_width = max(len(x) for x in lines)
     lines = [format(x, '>{}'.format(timeline_width)) + ' -'
