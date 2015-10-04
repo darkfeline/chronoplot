@@ -9,7 +9,7 @@ sdist:
 	python3 setup.py sdist
 
 wheel:
-	python setup.py bdist_wheel
+	python3 setup.py bdist_wheel
 
 clean:
 	rm dist/*
