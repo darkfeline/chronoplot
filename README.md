@@ -1,10 +1,8 @@
-chronos
-========
+# chronoplot
 
 Timeline maker.
 
-Example
--------
+## Example
 
 Make file `test`:
 
@@ -19,7 +17,7 @@ Format is `start_time stop_time group text`.
 
 Run:
 
-    $ chronos test
+    $ chronoplot test
      0 -                      +------------------+
        |                      |   Ciel nosurge   |
        |                      |    (memories)    |

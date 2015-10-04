@@ -3,13 +3,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='chronos',
+    name='chronoplot',
     version='0.1.0',
     package_dir={'': 'src'},
     packages=find_packages('src'),
     entry_points={
         'console_scripts': [
-            'chronos = chronos.main:main',
+            'chronoplot = chronoplot.main:main',
         ],
     },
 
