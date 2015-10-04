@@ -18,8 +18,11 @@
 from collections import namedtuple
 import shlex
 import argparse
+import logging
 
-Event = namedtuple('Event', ['start', 'stop', 'title'])
+from . import draw
+
+Event = namedtuple('Event', ['start', 'stop', 'group', 'title'])
 
 
 class Timeline:
@@ -34,19 +37,19 @@ class Timeline:
 def parse_timeline(file):
     timeline = Timeline()
     for line in file:
-        event = Event(*shlex.split(line))
+        start, stop, group, title = shlex.split(line)
+        start = int(start)
+        stop = int(stop)
+        event = Event(start, stop, group, title)
         timeline.add_event(event)
     return timeline
 
 
-def text_draw(timeline):
-    print(timeline.events)
-
-
 def main():
+    logging.basicConfig(level='DEBUG')
     parser = argparse.ArgumentParser()
     parser.add_argument('file')
     args = parser.parse_args()
     with open(args.file) as file:
         timeline = parse_timeline(file)
-    text_draw(timeline)
+    draw.text_draw(timeline)
