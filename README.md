@@ -1,8 +1,10 @@
-# chronoplot
+chronoplot
+==========
 
 Timeline maker.
 
-## Example
+Example
+-------
 
 Make file `test`:
 
