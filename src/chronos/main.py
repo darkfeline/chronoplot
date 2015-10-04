@@ -27,18 +27,22 @@ def parse_timeline(file):
     timeline = tline.Timeline()
     for line in file:
         start, stop, group, text = shlex.split(line)
-        start = int(start)
-        stop = int(stop)
+        start = float(start)
+        stop = float(stop)
         event = tline.Event(start, stop, group, text)
         timeline.add_event(event)
     return timeline
 
 
 def main():
-    logging.basicConfig(level='INFO')
     parser = argparse.ArgumentParser()
     parser.add_argument('file')
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
+    if args.debug:
+        logging.basicConfig(level='DEBUG')
+    else:
+        logging.basicConfig(level='INFO')
     with open(args.file) as file:
         timeline = parse_timeline(file)
     draw.text_draw(timeline)

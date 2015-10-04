@@ -143,9 +143,11 @@ def text_draw(timeline):
     start, stop = timeline.range()
     start = _Time(scalar, start)
     stop = _Time(scalar, stop)
+    _LOGGER.debug('Start: %s, scaled: %s', start.value, start.scaled)
+    _LOGGER.debug('Stop: %s, scaled: %s', stop.value, stop.scaled)
 
     # Make timeline.
-    lines = [format(int(x / scalar))
+    lines = [format(x / scalar)
              for x in range(start.scaled, stop.scaled + 1)]
     timeline_width = max(len(x) for x in lines)
     lines = [format(x, '>{}'.format(timeline_width)) + ' -'
@@ -159,8 +161,10 @@ def text_draw(timeline):
         # Use boxes to draw events.
         for event in events:
             box_start, box_lines = _format_event(event, box_width, scalar)
+            _LOGGER.debug('%s %s', start.scaled, box_start.scaled)
             for i, x in enumerate(box_lines):
-                group_lines[start.scaled + box_start.scaled + i] = x
+                _LOGGER.debug(x)
+                group_lines[-start.scaled + box_start.scaled + i] = x
         # Add group events to timeline.
         lines = [' '.join(x) for x in zip(lines, group_lines)]
     # Print lines.
