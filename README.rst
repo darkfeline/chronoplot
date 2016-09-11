@@ -6,7 +6,7 @@ Timeline maker.
 Example
 -------
 
-Make file `test`:
+Make file ``test``::
 
     0 10 1 "Ciel nosurge (memories)"
     20 30 1 "Ciel nosurge"
@@ -15,9 +15,9 @@ Make file `test`:
     60 70 2 "Ar Tonelico 2"
     70 80 2 "Ar Tonelico 3"
 
-Format is `start_time stop_time group text`.
+Format is ``start_time stop_time group text``.
 
-Run:
+Run::
 
     $ chronoplot test
      0 -                      +------------------+
